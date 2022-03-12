@@ -1,0 +1,10 @@
+.gradle
+.idea
+out
+build
+frontend
+node_modules
+
+*.js
+*.ts
+*.json
