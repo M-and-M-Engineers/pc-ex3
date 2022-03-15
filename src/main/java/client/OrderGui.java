@@ -13,12 +13,13 @@ public class OrderGui extends JDialog {
     private JPanel panel;
     private JButton order;
     private JLabel availability;
-    private int sugarLevelValue = 2;
+    private int sugarLevelValue;
 
-    public OrderGui(JFrame frame, String product, Consumer<String> availabilityConsumer) {
+    public OrderGui(final JFrame frame, final String product, final int remaining, final int sugarRemaining) {
         super(frame, true);
+        this.sugarLevelValue = 2;
         this.addSugar.addActionListener(e -> {
-            if (this.sugarLevelValue < 5) {
+            if (this.sugarLevelValue < 5 && this.sugarLevelValue < sugarRemaining) {
                 this.sugarLevelValue++;
                 this.sugarLevel.setText(String.valueOf(this.sugarLevelValue));
             }
@@ -30,7 +31,7 @@ public class OrderGui extends JDialog {
             }
         });
         this.availability.setBorder(new EmptyBorder(5, 0, 10, 0));
-        availabilityConsumer.accept(product);
+        this.availability.setText("Remaining products: " + remaining);
         setSize(200, 200);
         setTitle(product.toUpperCase());
         setResizable(false);
@@ -43,10 +44,6 @@ public class OrderGui extends JDialog {
             consumer.accept(this.sugarLevelValue);
             this.dispose();
         });
-    }
-
-    public void setAvailability(String availability) {
-        this.availability.setText("Remaining products: " + availability);
     }
 
     {

@@ -27,6 +27,15 @@ public class ResourceImpl implements Resource {
 
     @Override
     public String toString() {
-        return "Product: " + this.name;
+        return this.name;
+    }
+
+    @Override
+    public Resource clone() {
+        try {
+            return (ResourceImpl) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

@@ -1,67 +1,91 @@
 package manager;
 
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.dataview.GridListDataView;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.router.*;
-import com.vaadin.flow.server.Command;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.HasDynamicTitle;
+import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import common.Glasses;
 import common.Resource;
 import common.ResourceImpl;
 import common.Sugar;
 
-import java.util.List;
-
 @Route("machine/:name")
-public class SmartCoffeeMachineView extends HorizontalLayout implements BeforeEnterObserver {
+public class SmartCoffeeMachineView extends NotifiableView implements BeforeEnterObserver, HasDynamicTitle {
 
+    private static final String STATUS_TEXT = "Status -> ";
     private final DashBoardService service;
-    private final UI ui;
+    private final H1 heading;
     private final Label status;
     private final Grid<Resource> resources;
+    private String name;
 
     public SmartCoffeeMachineView() {
+        super();
         this.service = VaadinSession.getCurrent().getAttribute(DashBoardService.class);
-        this.ui = UI.getCurrent();
+
+        this.heading = new H1();
+
         this.status = new Label();
 
         this.resources = new Grid<>(Resource.class, true);
+        this.resources.setAllRowsVisible(true);
+        this.resources.setWidth("35%");
+        this.resources.setSelectionMode(Grid.SelectionMode.NONE);
+        this.resources.getColumns().forEach(c -> {
+            c.setSortable(false);
+            c.setTextAlign(ColumnTextAlign.CENTER);
+        });
+        this.resources.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
 
-        add(this.status, this.resources);
+        add(this.heading, this.status, this.resources);
+
+        setHorizontalComponentAlignment(Alignment.CENTER, this.resources);
+        setAlignItems(Alignment.CENTER);
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        final String name = event.getRouteParameters().get("name").orElse(null);
+        this.name = event.getRouteParameters().get("name").orElse(null);
 
-        /*digitalTwin.getStatus().onComplete(res -> {
-            if (res.succeeded())
-                ui.access(() -> this.status.setText(res.result()));
-            else
-                ui.access(() -> this.status.setText("Unreachable"));
-        });*/
-        GridListDataView<Resource> resources = this.resources.setItems(this.service.getResourcesOfDigitalTwin(name));
+        this.heading.setText(this.name);
 
-        //digitalTwin.subscribeToStatusChanged(s -> ui.access(() -> this.status.setText(s)), s -> ui.access(() -> this.status.setText("Out of service")));
-        resources.setIdentifierProvider(Resource::getName);
-        this.service.subscribeToRemaining(name, json -> {
-            String product = json.getString("product");
-            int remaining = json.getInteger("remaining");
-            int sugarRemaining = json.getInteger("sugarRemaining");
-            int glassesRemaining = json.getInteger("glassesRemaining");
+        this.service.getStatusOfDigitalTwin(this.name).onComplete(r -> {
+            if (r.succeeded()) {
+                this.updateUI(() -> this.resources.setItems(this.service.getResourcesOfDigitalTwin(this.name))
+                        .setIdentifierProvider(Resource::getName));
 
-            updateUI(() -> {
-                resources.refreshItem(new ResourceImpl(product, remaining));
-                resources.refreshItem(new Sugar(sugarRemaining));
-                resources.refreshItem(new Glasses(glassesRemaining));
+                this.updateUI(() -> this.status.setText(STATUS_TEXT + r.result()));
+            } else {
+                this.updateUI(() -> this.status.setText(STATUS_TEXT + "Out of service"));
+            }
+        });
+
+        this.service.subscribeToStatusChanged(this.name,
+                s -> this.updateUI(() -> this.status.setText(STATUS_TEXT + s)),
+                unused -> this.updateUI(() -> this.status.setText(STATUS_TEXT + "Out of service")));
+
+        this.service.subscribeToServed(this.name, json -> {
+            final String product = json.getString("product");
+            final int remaining = json.getInteger("remaining");
+            final int sugarRemaining = json.getInteger("sugarRemaining");
+            final int glassesRemaining = json.getInteger("glassesRemaining");
+
+            this.updateUI(() -> {
+                this.resources.getListDataView().refreshItem(new ResourceImpl(product, remaining));
+                this.resources.getListDataView().refreshItem(new Sugar(sugarRemaining));
+                this.resources.getListDataView().refreshItem(new Glasses(glassesRemaining));
             });
         });
     }
 
-    private void updateUI(Command command) {
-        this.ui.access(command);
+    @Override
+    public String getPageTitle() {
+        return "Smart Coffee Machine " + this.name;
     }
 }
