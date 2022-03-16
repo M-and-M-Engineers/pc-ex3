@@ -1,8 +1,8 @@
 package manager;
 
-import common.Resource;
-import common.ResourceImpl;
-import common.SmartCoffeeMachineAPI;
+import scm.Resource;
+import scm.ResourceImpl;
+import scm.SmartCoffeeMachineAPI;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;

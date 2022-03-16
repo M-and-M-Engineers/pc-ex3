@@ -1,0 +1,151 @@
+{
+  "id": "urn:smart-coffee-machine",
+  "@context": "https://www.w3.org/2019/wot/td/v1",
+  "title": "SmartCoffeeMachine",
+  "description": "Smart Coffee Machine with some products that can be ordered.",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "security": [ "nosec_sc" ],
+  "$defs": {
+    "resource": {
+      "type": "object",
+      "properties" : {
+        "name": {
+          "type": "string"
+        },
+        "remaining": {
+          "type": "integer"
+        }
+      },
+      "required": ["name", "remaining"]
+    },
+    "orderData": {
+      "type": "object",
+      "properties": {
+        "product": {
+          "type": "string"
+        },
+        "remaining": {
+          "type": "integer"
+        },
+        "sugarRemaining": {
+          "type": "integer"
+        },
+        "glassesRemaining": {
+          "type": "integer"
+        }
+      },
+      "required": ["product", "remaining", "sugarRemaining", "glassesRemaining"]
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "forms": [{
+        "href": "https://scm.example.com/scm/properties/name",
+        "op": "readproperty",
+        "contentType": "text/plain"
+      }],
+      "readOnly": true,
+      "writeOnly": false
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Working", "NotAvailable", "Out of Service"],
+      "forms": [{
+        "href": "https://scm.example.com/scm/properties/status",
+        "op": "readproperty",
+        "contentType": "text/plain"
+      }],
+      "readOnly": true,
+      "writeOnly": false
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resource",
+        "readOnly": true,
+        "writeOnly": false
+      },
+      "forms": [{
+        "href": "https://scm.example.com/scm/properties/resources",
+        "op": "readproperty",
+        "contentType": "text/plain"
+      }],
+      "readOnly": true,
+      "writeOnly": false
+    }
+  },
+  "actions": {
+    "make": {
+      "forms": [{
+        "href": "https://scm.example.com/scm/actions/make",
+        "op": "invokeaction",
+        "contentType": "application/json"
+      }],
+      "safe": false,
+      "idempotent": false
+    }
+  },
+  "events": {
+    "serving": {
+      "data": {
+        "title": "queueNumber",
+        "type": "integer",
+        "readOnly": true,
+        "writeOnly": false
+      },
+      "forms": [{
+        "href": "https://scm.example.com/scm/events/serving",
+        "op": "subscribeevent",
+        "contentType": "text/plain"
+      }]
+    },
+    "statusChanged": {
+      "data": {
+        "title": "status",
+        "type": "string",
+        "readOnly": true,
+        "writeOnly": false
+      },
+      "forms": [{
+        "href": "https://scm.example.com/scm/events/statusChanged",
+        "op": "subscribeevent",
+        "contentType": "text/plain"
+      }]
+    },
+    "ordered": {
+      "data": {
+        "title": "orderData",
+        "schema": {
+          "type": "orderData"
+        },
+        "readOnly": true,
+        "writeOnly": false
+      },
+      "forms": [{
+        "href": "https://scm.example.com/scm/events/ordered",
+        "op": "subscribeevent",
+        "contentType": "text/plain"
+      }]
+    },
+    "served": {
+      "data": {
+        "title": "servedData",
+        "schema": {
+          "type": "orderData"
+        },
+        "readOnly": true,
+        "writeOnly": false
+      },
+      "forms": [{
+        "href": "https://scm.example.com/scm/events/served",
+        "op": "subscribeevent",
+        "contentType": "text/plain"
+      }]
+    }
+  }
+}

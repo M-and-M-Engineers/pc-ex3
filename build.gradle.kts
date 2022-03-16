@@ -7,17 +7,18 @@ plugins {
 
 repositories {
     mavenCentral()
-//    maven { setUrl("https://maven.vaadin.com/vaadin-addons") }
 }
 
 vaadin {
     optimizeBundle = false
-    productionMode = false
+    productionMode = true
+    pnpmEnable = true
 }
 
 gretty {
     contextPath = "/"
     servletContainer = "jetty9.4"
+    scanInterval = 100
 }
 
 dependencies {
@@ -40,8 +41,8 @@ tasks.register<JavaExec>("scm"){
     args("10000", "scm")
 }
 
-tasks.register<JavaExec>("client"){
+tasks.register<JavaExec>("user"){
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("client.Application")
+    mainClass.set("user.Application")
     args("10000")
 }

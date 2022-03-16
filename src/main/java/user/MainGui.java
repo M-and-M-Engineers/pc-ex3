@@ -1,10 +1,11 @@
-package client;
+package user;
 
-import common.Resource;
+import scm.Resource;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -15,38 +16,45 @@ public class MainGui extends JFrame {
     private JList<Resource> productList;
     private JLabel ticket;
     private JLabel serving;
+    private final List<Integer> tickets;
 
     public MainGui() {
         $$$setupUI$$$();
         this.productList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        this.productList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-        this.productList.setVisibleRowCount(-1);
+        this.productList.setLayoutOrientation(JList.VERTICAL_WRAP);
+        this.productList.setVisibleRowCount(3);
         this.productList.setFixedCellHeight(25);
+        this.productList.setFixedCellWidth(175);
         this.status.setBorder(new EmptyBorder(0, 0, 5, 0));
         this.panel.setBorder(new EmptyBorder(15, 15, 15, 15));
         this.serving.setBorder(new EmptyBorder(5, 0, 0, 0));
         this.ticket.setBorder(new EmptyBorder(5, 0, 0, 0));
+        this.tickets = new LinkedList<>();
         setSize(400, 250);
-        setTitle("SCM");
+        setTitle("Smart Coffee Machine: ");
         getContentPane().add(this.panel);
         setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
-    public void setStatusText(String status) {
+    public void setStatusText(final String status) {
         this.status.setText("Status: " + status);
     }
 
-    public void setProducts(List<Resource> products) {
+    public void setProducts(final List<Resource> products) {
         DefaultListModel<Resource> model = new DefaultListModel<>();
         model.addAll(products);
         this.productList.setModel(model);
     }
 
+    public void setName(final String name) {
+        this.setTitle(this.getTitle() + name);
+    }
+
     // SET LISTENER
 
-    public void setSelectProductAction(Consumer<Resource> consumer) {
+    public void setSelectProductAction(final Consumer<Resource> consumer) {
         this.productList.addListSelectionListener(e -> {
             if (!this.productList.isSelectionEmpty() && !e.getValueIsAdjusting()) {
                 consumer.accept(this.productList.getSelectedValue());
@@ -56,22 +64,27 @@ public class MainGui extends JFrame {
     }
 
     // UPDATE UI METHODS
-    // TODO refactor
 
-    public void setServingNumber(Integer queueNumber) {
+    public void setServingNumber(final int queueNumber) {
         SwingUtilities.invokeLater(() -> {
             this.serving.setText("Now serving " + queueNumber);
-            String text = this.ticket.getText();
-            if (Integer.parseInt(text.substring(text.lastIndexOf(" ") + 1)) == queueNumber)
-                JOptionPane.showMessageDialog(this, "Your product will be ready shortly.");
+            if (!this.tickets.isEmpty()) {
+                if (this.tickets.get(0) < queueNumber) {
+                    this.tickets.remove(0);
+                    SwingUtilities.invokeLater(() -> this.ticket.setText("Your ticket is " + (this.tickets.size() > 0 ? this.tickets.get(0) : "-")));
+                }
+                if (this.tickets.get(0) == queueNumber)
+                    JOptionPane.showMessageDialog(this, "Your product will be ready shortly.");
+            }
         });
     }
 
-    public void showTicket(int ticket) {
-        SwingUtilities.invokeLater(() -> this.ticket.setText("Your ticket is " + ticket));
+    public void showTicket(final int ticket) {
+        this.tickets.add(ticket);
+        SwingUtilities.invokeLater(() -> this.ticket.setText("Your ticket is " + this.tickets.get(0)));
     }
 
-    public void showDialog(String stringToShow) {
+    public void showDialog(final String stringToShow) {
         SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, stringToShow));
     }
 

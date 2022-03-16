@@ -5,6 +5,7 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.server.VaadinSession;
+import scm.Status;
 
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -50,13 +51,13 @@ public class DashBoardView extends NotifiableView {
             if (r.succeeded())
                 this.updateUI(() -> status.setText(STATUS_TEXT + r.result()));
             else
-                this.updateUI(() -> status.setText(STATUS_TEXT + "Out of service"));
+                this.updateUI(() -> status.setText(STATUS_TEXT + Status.OUT_OF_SERVICE));
             this.latch.countDown();
         });
 
         this.service.subscribeToStatusChanged(name,
                 s -> this.updateUI(() -> status.setText(STATUS_TEXT + s)),
-                unused -> this.updateUI(() -> status.setText(STATUS_TEXT + "Out of service")));
+                unused -> this.updateUI(() -> status.setText(STATUS_TEXT + Status.OUT_OF_SERVICE)));
 
         add(layout);
     }

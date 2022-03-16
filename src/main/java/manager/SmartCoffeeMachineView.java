@@ -10,10 +10,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-import common.Glasses;
-import common.Resource;
-import common.ResourceImpl;
-import common.Sugar;
+import scm.*;
 
 @Route("machine/:name")
 public class SmartCoffeeMachineView extends NotifiableView implements BeforeEnterObserver, HasDynamicTitle {
@@ -50,7 +47,7 @@ public class SmartCoffeeMachineView extends NotifiableView implements BeforeEnte
     }
 
     @Override
-    public void beforeEnter(BeforeEnterEvent event) {
+    public void beforeEnter(final BeforeEnterEvent event) {
         this.name = event.getRouteParameters().get("name").orElse(null);
 
         this.heading.setText(this.name);
@@ -62,13 +59,13 @@ public class SmartCoffeeMachineView extends NotifiableView implements BeforeEnte
 
                 this.updateUI(() -> this.status.setText(STATUS_TEXT + r.result()));
             } else {
-                this.updateUI(() -> this.status.setText(STATUS_TEXT + "Out of service"));
+                this.updateUI(() -> this.status.setText(STATUS_TEXT + Status.OUT_OF_SERVICE));
             }
         });
 
         this.service.subscribeToStatusChanged(this.name,
                 s -> this.updateUI(() -> this.status.setText(STATUS_TEXT + s)),
-                unused -> this.updateUI(() -> this.status.setText(STATUS_TEXT + "Out of service")));
+                unused -> this.updateUI(() -> this.status.setText(STATUS_TEXT + Status.OUT_OF_SERVICE)));
 
         this.service.subscribeToServed(this.name, json -> {
             final String product = json.getString("product");

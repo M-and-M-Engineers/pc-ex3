@@ -1,4 +1,4 @@
-package common;
+package scm;
 
 public class Sugar extends ResourceImpl {
 

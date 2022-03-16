@@ -1,14 +1,14 @@
-package client;
+package user;
 
-import common.Glasses;
-import common.Resource;
-import common.ResourceImpl;
-import common.Sugar;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
+import scm.Glasses;
+import scm.Resource;
+import scm.ResourceImpl;
+import scm.Sugar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +17,7 @@ public class Application {
 
     private static final int ACCEPT_CODE = 200;
     private static final String BASE_URI = "/scm/";
+    private static final String PROPERTY_NAME = BASE_URI + "properties/name";
     private static final String PROPERTY_STATUS = BASE_URI + "properties/status";
     private static final String PROPERTY_RESOURCES = BASE_URI + "properties/resources";
     private static final String ACTIONS_MAKE = BASE_URI + "actions/make";
@@ -47,11 +48,17 @@ public class Application {
         });
         this.gui.setVisible(true);
 
+        this.getName();
         this.getStatus();
         this.getResources();
         this.subscribeToServing();
-        this.subscribeToRemaining();
+        this.subscribeToOrdered();
         this.subscribeToStatusChanged();
+    }
+
+    private void getName() {
+        this.client.get(this.port, "localhost", PROPERTY_NAME)
+                .send(r -> this.gui.setName(r.result().bodyAsString()));
     }
 
     private void getStatus() {
@@ -92,11 +99,10 @@ public class Application {
                 socket.handler(buf -> this.gui.setServingNumber(buf.toJsonObject().getInteger("queueNumber"))));
     }
 
-    private void subscribeToRemaining() {
+    private void subscribeToOrdered() {
         cli.webSocket(this.port, "localhost", ORDERED).onSuccess(socket ->
                 socket.handler(buffer -> {
                     final JsonObject json = buffer.toJsonObject();
-                    System.out.println(json);
                     final String product = json.getString("product");
                     final int remaining = json.getInteger("remaining");
                     final int sugarRemaining = json.getInteger("sugarRemaining");

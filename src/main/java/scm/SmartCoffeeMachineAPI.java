@@ -1,4 +1,4 @@
-package common;
+package scm;
 
 import io.vertx.core.Future;
 

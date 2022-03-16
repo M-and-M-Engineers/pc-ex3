@@ -1,6 +1,5 @@
 package scm;
 
-import common.*;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
@@ -25,8 +24,9 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
             "Cioccolata",
             "Thè nero",
             "Thè verde"));
-    private static final PrimitiveIterator.OfInt QUANTITY_STREAM = IntStream.generate(() -> new Random().nextInt(5)).iterator();
-    private static final int INITIAL_SUGAR_AMOUNT = 100;
+    private static final PrimitiveIterator.OfInt QUANTITY_STREAM =
+            IntStream.generate(() -> new Random().nextInt(5)).iterator();
+    private static final int INITIAL_SUGAR_AMOUNT = 10;
     private static final int INITIAL_GLASSES_AMOUNT = 50;
     private static final int MINIMUM_PRODUCT_AMOUNT = 1;
     private final String name;
@@ -40,7 +40,7 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
     private final Glasses glassesCopy;
     private int queueNumber;
     private int ticketNumber;
-    private String status;
+    private Status status;
 
     public SmartCoffeeMachineModel(final String name, EventBus eventBus) {
         this.name = name;
@@ -63,7 +63,7 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
 
         this.queueNumber = 0;
         this.ticketNumber = 1;
-        this.status = "Working";
+        this.status = Status.WORKING;
         this.publishStatus();
     }
 
@@ -80,7 +80,7 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
     public Future<String> getStatus() {
         final Promise<String> promise = Promise.promise();
         synchronized (this) {
-            promise.complete(this.status);
+            promise.complete(this.status.toString());
         }
         return promise.future();
     }
@@ -136,7 +136,7 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
                         this.publishServed(resource);
 
                         if (this.glasses.getRemaining() == 0 || this.resources.stream().allMatch(r -> r.getRemaining() == 0)) {
-                            this.status = "Not available";
+                            this.status = Status.NOT_AVAILABLE;
                             this.publishStatus();
                         }
 
@@ -176,7 +176,7 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
     }
 
     private void publishStatus() {
-        this.eventBus.publish("events/statusChanged", this.status);
+        this.eventBus.publish("events/statusChanged", this.status.toString());
     }
 
 }

@@ -5,6 +5,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.server.Command;
 import com.vaadin.flow.server.VaadinSession;
+import scm.Status;
 
 public class NotifiableView extends VerticalLayout {
 
@@ -24,18 +25,18 @@ public class NotifiableView extends VerticalLayout {
                 final int glassesRemaining = json.getInteger("glassesRemaining");
 
                 if (remaining < 3)
-                    this.showNotification("Product " + product + " is nearly over. There are only " + remaining + " units left.");
+                    this.showNotification("Product " + product + " of coffee machine " + scm + " is nearly over. There are only " + remaining + " units left.");
 
                 if (sugarRemaining < 15)
-                    this.showNotification("Sugar is nearly over. There are only " + sugarRemaining + " units left.");
+                    this.showNotification("Sugar of coffee machine " + scm + " is nearly over. There are only " + sugarRemaining + " units left.");
 
                 if (glassesRemaining < 7)
-                    this.showNotification("Glasses are nearly over. There are only " + glassesRemaining + " units left.");
+                    this.showNotification("Glasses of coffee machine " + scm + " are nearly over. There are only " + glassesRemaining + " units left.");
             });
 
             service.subscribeToStatusChanged(scm,
                     s -> this.showNotification("Smart Coffee Machine " + scm + " is now " + s),
-                    unused -> this.showNotification("Smart Coffee Machine " + scm + " is out of service"));
+                    unused -> this.showNotification("Smart Coffee Machine " + scm + " is " + Status.OUT_OF_SERVICE));
 
         });
     }

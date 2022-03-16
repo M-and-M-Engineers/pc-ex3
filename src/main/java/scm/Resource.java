@@ -1,4 +1,4 @@
-package common;
+package scm;
 
 public interface Resource extends Cloneable {
 

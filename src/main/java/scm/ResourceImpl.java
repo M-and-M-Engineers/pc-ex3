@@ -1,4 +1,4 @@
-package common;
+package scm;
 
 public class ResourceImpl implements Resource {
 

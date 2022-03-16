@@ -1,6 +1,6 @@
 package manager;
 
-import common.Resource;
+import scm.Resource;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
