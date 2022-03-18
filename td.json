@@ -52,11 +52,11 @@
       "readOnly": true,
       "writeOnly": false
     },
-    "status": {
+    "state": {
       "type": "string",
       "enum": ["Working", "NotAvailable", "Out of Service"],
       "forms": [{
-        "href": "https://scm.example.com/scm/properties/status",
+        "href": "https://scm.example.com/scm/properties/state",
         "op": "readproperty",
         "contentType": "text/plain"
       }],
@@ -104,15 +104,15 @@
         "contentType": "text/plain"
       }]
     },
-    "statusChanged": {
+    "stateChanged": {
       "data": {
-        "title": "status",
+        "title": "state",
         "type": "string",
         "readOnly": true,
         "writeOnly": false
       },
       "forms": [{
-        "href": "https://scm.example.com/scm/events/statusChanged",
+        "href": "https://scm.example.com/scm/events/stateChanged",
         "op": "subscribeevent",
         "contentType": "text/plain"
       }]

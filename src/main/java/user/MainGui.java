@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 
 public class MainGui extends JFrame {
 
-    private JLabel status;
+    private JLabel state;
     private JPanel panel;
     private JList<Resource> productList;
     private JLabel ticket;
@@ -25,7 +25,7 @@ public class MainGui extends JFrame {
         this.productList.setVisibleRowCount(3);
         this.productList.setFixedCellHeight(25);
         this.productList.setFixedCellWidth(175);
-        this.status.setBorder(new EmptyBorder(0, 0, 5, 0));
+        this.state.setBorder(new EmptyBorder(0, 0, 5, 0));
         this.panel.setBorder(new EmptyBorder(15, 15, 15, 15));
         this.serving.setBorder(new EmptyBorder(5, 0, 0, 0));
         this.ticket.setBorder(new EmptyBorder(5, 0, 0, 0));
@@ -38,8 +38,8 @@ public class MainGui extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
-    public void setStatusText(final String status) {
-        this.status.setText("Status: " + status);
+    public void setStateText(final String state) {
+        this.state.setText("State: " + state);
     }
 
     public void setProducts(final List<Resource> products) {
@@ -106,14 +106,14 @@ public class MainGui extends JFrame {
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.BOTH;
         panel.add(productList, gbc);
-        status = new JLabel();
-        status.setText("");
+        state = new JLabel();
+        state.setText("");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
-        panel.add(status, gbc);
+        panel.add(state, gbc);
         ticket = new JLabel();
         ticket.setText("");
         gbc = new GridBagConstraints();

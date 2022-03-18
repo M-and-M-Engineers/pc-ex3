@@ -18,13 +18,13 @@ public class Application {
     private static final int ACCEPT_CODE = 200;
     private static final String BASE_URI = "/scm/";
     private static final String PROPERTY_NAME = BASE_URI + "properties/name";
-    private static final String PROPERTY_STATUS = BASE_URI + "properties/status";
+    private static final String PROPERTY_STATUS = BASE_URI + "properties/state";
     private static final String PROPERTY_RESOURCES = BASE_URI + "properties/resources";
     private static final String ACTIONS_MAKE = BASE_URI + "actions/make";
     private static final String EVENTS = BASE_URI + "events/";
     private static final String SERVING = EVENTS + "serving";
     private static final String ORDERED = EVENTS + "ordered";
-    private static final String STATUS_CHANGED = EVENTS + "statusChanged";
+    private static final String STATUS_CHANGED = EVENTS + "stateChanged";
     private final WebClient client;
     private final HttpClient cli;
     private final MainGui gui;
@@ -49,11 +49,11 @@ public class Application {
         this.gui.setVisible(true);
 
         this.getName();
-        this.getStatus();
+        this.getState();
         this.getResources();
         this.subscribeToServing();
         this.subscribeToOrdered();
-        this.subscribeToStatusChanged();
+        this.subscribeToStateChanged();
     }
 
     private void getName() {
@@ -61,9 +61,9 @@ public class Application {
                 .send(r -> this.gui.setName(r.result().bodyAsString()));
     }
 
-    private void getStatus() {
+    private void getState() {
        client.get(this.port, "localhost", PROPERTY_STATUS)
-               .send(r -> this.gui.setStatusText(r.result().bodyAsString()));
+               .send(r -> this.gui.setStateText(r.result().bodyAsString()));
     }
 
     private void getResources() {
@@ -128,9 +128,9 @@ public class Application {
                 }));
     }
 
-    private void subscribeToStatusChanged() {
+    private void subscribeToStateChanged() {
         cli.webSocket(this.port, "localhost", STATUS_CHANGED).onSuccess(socket ->
-                socket.handler(buf -> this.gui.setStatusText(buf.toString())));
+                socket.handler(buf -> this.gui.setStateText(buf.toString())));
     }
 
     public static void main(final String[] args) {

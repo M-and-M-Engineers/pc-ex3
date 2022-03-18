@@ -1,59 +1,107 @@
 package manager;
 
 import scm.Resource;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import scm.State;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class DashBoardService {
 
-    private final Map<String, SmartCoffeeMachineDigitalTwin> digitalTwins;
-    private final Map<SmartCoffeeMachineDigitalTwin, List<Resource>> allResources;
-    private final CountDownLatch latch;
+    private final Map<Integer, SmartCoffeeMachineDigitalTwin> digitalTwins;
+    private final Map<Integer, String> names;
+    private final Map<Integer, String> states;
+    private final Map<Integer, List<Resource>> allResources;
+    private final CountDownLatch namesLatch;
+    private final CountDownLatch stateLatch;
+    private final CountDownLatch resourcesLatch;
+    private boolean notificationsActive;
 
     public DashBoardService() {
         final int[] ports = new int[]{ 10000, 10001, 10002 };
         this.digitalTwins = new HashMap<>();
+        this.names = new HashMap<>();
+        this.states = new HashMap<>();
         this.allResources = new HashMap<>();
-        this.latch = new CountDownLatch(ports.length);
+        this.namesLatch = new CountDownLatch(ports.length);
+        this.stateLatch = new CountDownLatch(ports.length);
+        this.resourcesLatch = new CountDownLatch(ports.length);
+        
         for (final int port : ports) {
-            final SmartCoffeeMachineDigitalTwin digitalTwin = new SmartCoffeeMachineDigitalTwin("localhost", port);
-            digitalTwin.getName().onComplete(res -> {
-                if (res.succeeded())
-                    this.digitalTwins.put(res.result(), digitalTwin);
-                else
-                    this.digitalTwins.put("scm" + port, digitalTwin);
-                this.latch.countDown();
-            });
-            digitalTwin.getResources().onSuccess(resources -> this.allResources.put(digitalTwin, resources));
+            this.digitalTwins.put(port, new SmartCoffeeMachineDigitalTwin("localhost", port));
+            this.getProperties(port);
         }
     }
 
-    public Set<String> getDigitalTwinNames() {
+    private void getProperties(int port) {
+        final SmartCoffeeMachineDigitalTwin digitalTwin = this.digitalTwins.get(port);
+        digitalTwin.getName().onComplete(res -> {
+            if (res.succeeded())
+                this.names.put(port, res.result());
+            else
+                this.names.put(port, "scm" + port);
+            this.namesLatch.countDown();
+        });
+        digitalTwin.getState().onComplete(res -> {
+            if (res.succeeded())
+                this.states.put(port, res.result());
+            else
+                this.states.put(port, State.OUT_OF_SERVICE.toString());
+            this.stateLatch.countDown();
+        });
+        digitalTwin.getResources().onComplete(res -> {
+            if (res.succeeded())
+                this.allResources.put(port, res.result());
+            else
+                this.allResources.put(port, Collections.emptyList());
+
+            this.resourcesLatch.countDown();
+        });
+    }
+
+    public boolean areNotificationsActive() {
+        return this.notificationsActive;
+    }
+
+    public void activateNotifications() {
+        this.notificationsActive = true;
+    }
+    
+    public Map<Integer, String> getNames() {
         try {
-            this.latch.await();
-            return this.digitalTwins.keySet();
+            this.namesLatch.await();
+            return new HashMap<>(this.names);
         } catch (InterruptedException e) {
-            return Collections.emptySet();
+            return Collections.emptyMap();
         }
     }
 
-    public List<Resource> getResourcesOfDigitalTwin(final String name) {
-        return this.allResources.get(this.digitalTwins.get(name));
+    public String getStates(final int port) {
+        try {
+            this.stateLatch.await();
+            return this.states.get(port);
+        } catch (InterruptedException e) {
+            return State.OUT_OF_SERVICE.toString();
+        }
     }
 
-    public void subscribeToServed(final String name, final Handler<JsonObject> handler) {
-        this.digitalTwins.get(name).subscribeToServed(handler);
+    public List<Resource> getResources(final int port) {
+        try {
+            this.resourcesLatch.await();
+            return this.allResources.get(port);
+        } catch (InterruptedException e) {
+            return Collections.emptyList();
+        }
     }
 
-    public void subscribeToStatusChanged(final String name, final Handler<String> handler, final Handler<Void> closeHandler) {
-        this.digitalTwins.get(name).subscribeToStatusChanged(handler, closeHandler);
+    public void subscribeToServed(final int port, final Handler<JsonObject> handler) {
+        this.digitalTwins.get(port).subscribeToServed(handler);
     }
 
-    public Future<String> getStatusOfDigitalTwin(final String name) {
-        return this.digitalTwins.get(name).getStatus();
+    public void subscribeToStateChanged(final int port, final Handler<String> handler, final Handler<Void> closeHandler) {
+        this.digitalTwins.get(port).subscribeToStateChanged(handler, closeHandler);
     }
+
 }

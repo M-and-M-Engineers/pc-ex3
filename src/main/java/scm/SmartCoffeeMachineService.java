@@ -17,18 +17,18 @@ public class SmartCoffeeMachineService extends AbstractVerticle {
 
     private static final int SERVICE_UNAVAILABLE = 503;
     private static final String PROPERTY_NAME = "/scm/properties/name";
-    private static final String PROPERTY_STATUS = "/scm/properties/status";
+    private static final String PROPERTY_STATUS = "/scm/properties/state";
     private static final String PROPERTY_RESOURCES = "/scm/properties/resources";
     private static final String ACTIONS_MAKE = "/scm/actions/make";
     private static final String EVENTS = "/scm/events/";
     private static final String SERVING = EVENTS + "serving";
-    private static final String STATUS_CHANGED = EVENTS + "statusChanged";
+    private static final String STATUS_CHANGED = EVENTS + "stateChanged";
     private static final String ORDERED = EVENTS + "ordered";
     private static final String SERVED = EVENTS + "served";
     private final List<ServerWebSocket> servingSubscribers;
     private final List<ServerWebSocket> orderedSubscribers;
     private final List<ServerWebSocket> servedSubscribers;
-    private final List<ServerWebSocket> statusSubscribers;
+    private final List<ServerWebSocket> stateSubscribers;
     private final String name;
     private final int port;
     private SmartCoffeeMachineModel model;
@@ -37,7 +37,7 @@ public class SmartCoffeeMachineService extends AbstractVerticle {
         this.name = name;
         this.port = port;
         this.servingSubscribers = new ArrayList<>();
-        this.statusSubscribers = new ArrayList<>();
+        this.stateSubscribers = new ArrayList<>();
         this.orderedSubscribers = new ArrayList<>();
         this.servedSubscribers = new ArrayList<>();
     }
@@ -52,7 +52,7 @@ public class SmartCoffeeMachineService extends AbstractVerticle {
     private Router createRoutes() {
         Router router = Router.router(this.getVertx());
         router.get(PROPERTY_NAME).handler(this::getName);
-        router.get(PROPERTY_STATUS).handler(this::getStatus);
+        router.get(PROPERTY_STATUS).handler(this::getState);
         router.get(PROPERTY_RESOURCES).handler(this::getResources);
         router.post(ACTIONS_MAKE).handler(this::make);
         return router;
@@ -105,15 +105,15 @@ public class SmartCoffeeMachineService extends AbstractVerticle {
                 }
             }
         });
-        eventBus.consumer("events/statusChanged", status -> {
-            Iterator<ServerWebSocket> iterator = this.statusSubscribers.iterator();
+        eventBus.consumer("events/stateChanged", state -> {
+            Iterator<ServerWebSocket> iterator = this.stateSubscribers.iterator();
             while (iterator.hasNext()){
                 ServerWebSocket socket = iterator.next();
                 if (socket.isClosed())
                     iterator.remove();
                 else {
                     try {
-                        socket.writeTextMessage((String) status.body());
+                        socket.writeTextMessage((String) state.body());
                     } catch (Exception exception) {
                         iterator.remove();
                     }
@@ -127,7 +127,7 @@ public class SmartCoffeeMachineService extends AbstractVerticle {
             if (handler.path().equals(SERVING))
                 this.servingSubscribers.add(handler);
             else if (handler.path().equals(STATUS_CHANGED))
-                this.statusSubscribers.add(handler);
+                this.stateSubscribers.add(handler);
             else if (handler.path().equals(ORDERED))
                 this.orderedSubscribers.add(handler);
             else if (handler.path().equals(SERVED))
@@ -143,8 +143,8 @@ public class SmartCoffeeMachineService extends AbstractVerticle {
        this.model.getName().onSuccess(name -> routingContext.response().end(name));
     }
 
-    private void getStatus(final RoutingContext routingContext) {
-        this.model.getStatus().onSuccess(status -> routingContext.response().end(status));
+    private void getState(final RoutingContext routingContext) {
+        this.model.getState().onSuccess(state -> routingContext.response().end(state));
     }
 
     private void getResources(final RoutingContext routingContext) {

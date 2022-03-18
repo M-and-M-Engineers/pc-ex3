@@ -18,12 +18,12 @@ import java.util.List;
 public class SmartCoffeeMachineDigitalTwin implements SmartCoffeeMachineAPI {
 
     private static final String PROPERTY_NAME = "/scm/properties/name";
-    private static final String PROPERTY_STATUS = "/scm/properties/status";
+    private static final String PROPERTY_STATUS = "/scm/properties/state";
     private static final String PROPERTY_RESOURCES = "/scm/properties/resources";
     private static final String ACTIONS_MAKE = "/scm/actions/make";
     private static final String EVENTS = "/scm/events/";
     private static final String SERVING = EVENTS + "serving";
-    private static final String STATUS_CHANGED = EVENTS + "statusChanged";
+    private static final String STATUS_CHANGED = EVENTS + "stateChanged";
     private static final String ORDERED = EVENTS + "ordered";
     private static final String SERVED = EVENTS + "served";
     private final WebClient client;
@@ -32,7 +32,7 @@ public class SmartCoffeeMachineDigitalTwin implements SmartCoffeeMachineAPI {
     private final List<Handler<JsonObject>> servingHandlers;
     private final List<Handler<JsonObject>> orderedHandlers;
     private final List<Handler<JsonObject>> servedHandlers;
-    private final List<Handler<String>> statusHandlers;
+    private final List<Handler<String>> stateHandlers;
     private final List<Handler<Void>> closeHandlers;
 
     public SmartCoffeeMachineDigitalTwin(final String host, final int port) {
@@ -43,7 +43,7 @@ public class SmartCoffeeMachineDigitalTwin implements SmartCoffeeMachineAPI {
         final HttpClient cli = vertx.createHttpClient();
 
         this.servingHandlers = new ArrayList<>();
-        this.statusHandlers = new ArrayList<>();
+        this.stateHandlers = new ArrayList<>();
         this.orderedHandlers = new ArrayList<>();
         this.servedHandlers = new ArrayList<>();
         this.closeHandlers = new ArrayList<>();
@@ -57,7 +57,7 @@ public class SmartCoffeeMachineDigitalTwin implements SmartCoffeeMachineAPI {
                 socket.handler(buf -> this.servedHandlers.forEach(handler -> handler.handle(buf.toJsonObject()))));
 
         cli.webSocket(port, host, STATUS_CHANGED).onSuccess(socket ->
-                socket.handler(buf -> this.statusHandlers.forEach(handler -> handler.handle(buf.toString())))
+                socket.handler(buf -> this.stateHandlers.forEach(handler -> handler.handle(buf.toString())))
                         .closeHandler(unused -> this.closeHandlers.forEach(h -> h.handle(null))));
     }
 
@@ -68,7 +68,7 @@ public class SmartCoffeeMachineDigitalTwin implements SmartCoffeeMachineAPI {
     }
 
     @Override
-    public Future<String> getStatus() {
+    public Future<String> getState() {
         return this.client.get(this.port, this.host, PROPERTY_STATUS)
                 .send().map(HttpResponse::bodyAsString);
     }
@@ -108,8 +108,8 @@ public class SmartCoffeeMachineDigitalTwin implements SmartCoffeeMachineAPI {
         this.servedHandlers.add(handler);
     }
 
-    public void subscribeToStatusChanged(final Handler<String> handler, final Handler<Void> closeHandler) {
-        this.statusHandlers.add(handler);
+    public void subscribeToStateChanged(final Handler<String> handler, final Handler<Void> closeHandler) {
+        this.stateHandlers.add(handler);
         this.closeHandlers.add(closeHandler);
     }
 

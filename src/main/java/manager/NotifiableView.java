@@ -5,40 +5,50 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.server.Command;
 import com.vaadin.flow.server.VaadinSession;
-import scm.Status;
+import scm.State;
 
 public class NotifiableView extends VerticalLayout {
 
     private static final int DURATION = 5000;
+    private final DashBoardService service;
     private final UI ui;
 
     public NotifiableView() {
-        final DashBoardService service = VaadinSession.getCurrent().getAttribute(DashBoardService.class);
+        this.service = VaadinSession.getCurrent().getAttribute(DashBoardService.class);
         this.ui = UI.getCurrent();
 
-        service.getDigitalTwinNames().forEach(scm -> {
+        if (!this.service.areNotificationsActive()) {
+            this.service.getNames().forEach(this::subscribeToUpdates);
+            this.service.activateNotifications();
+        }
+    }
 
-            service.subscribeToServed(scm, json -> {
-                final String product = json.getString("product");
-                final int remaining = json.getInteger("remaining");
-                final int sugarRemaining = json.getInteger("sugarRemaining");
-                final int glassesRemaining = json.getInteger("glassesRemaining");
+    private void subscribeToUpdates(final int port, final String name) {
+        this.service.subscribeToServed(port, json -> {
+            final String product = json.getString("product");
+            final int remaining = json.getInteger("remaining");
+            final int sugarRemaining = json.getInteger("sugarRemaining");
+            final int glassesRemaining = json.getInteger("glassesRemaining");
 
-                if (remaining < 3)
-                    this.showNotification("Product " + product + " of coffee machine " + scm + " is nearly over. There are only " + remaining + " units left.");
+            if (remaining == 0)
+                this.showNotification("Product '" + product + "' of coffe machine " + name + " is out of stock.");
+            else if (remaining < 3)
+                this.showNotification("Coffee machine " + name + " is running out of product '" + product + "'. There are only " + remaining + " units left.");
 
-                if (sugarRemaining < 15)
-                    this.showNotification("Sugar of coffee machine " + scm + " is nearly over. There are only " + sugarRemaining + " units left.");
+            if (sugarRemaining == 0)
+                this.showNotification("'Sugar' of coffe machine " + name + " is out of stock.");
+            else if (sugarRemaining < 15)
+                this.showNotification("Coffee machine " + name + " is running out of 'Sugar'. There are only " + sugarRemaining + " units left.");
 
-                if (glassesRemaining < 7)
-                    this.showNotification("Glasses of coffee machine " + scm + " are nearly over. There are only " + glassesRemaining + " units left.");
-            });
-
-            service.subscribeToStatusChanged(scm,
-                    s -> this.showNotification("Smart Coffee Machine " + scm + " is now " + s),
-                    unused -> this.showNotification("Smart Coffee Machine " + scm + " is " + Status.OUT_OF_SERVICE));
-
+            if (glassesRemaining == 0)
+                this.showNotification("'Glasses' of coffe machine " + name + " is out of stock.");
+            else if (glassesRemaining < 7)
+                this.showNotification("Coffee machine " + name + " is running out of 'Glasses'. There are only " + glassesRemaining + " units left.");
         });
+
+        this.service.subscribeToStateChanged(port,
+                s -> this.showNotification("Smart Coffee Machine " + name + " is now " + s),
+                unused -> this.showNotification("Smart Coffee Machine " + name + " is " + State.OUT_OF_SERVICE));
     }
 
     protected void updateUI(Command command) {

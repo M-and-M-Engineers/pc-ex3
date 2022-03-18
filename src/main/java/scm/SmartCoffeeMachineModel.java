@@ -26,7 +26,7 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
             "Thè verde"));
     private static final PrimitiveIterator.OfInt QUANTITY_STREAM =
             IntStream.generate(() -> new Random().nextInt(5)).iterator();
-    private static final int INITIAL_SUGAR_AMOUNT = 10;
+    private static final int INITIAL_SUGAR_AMOUNT = 100;
     private static final int INITIAL_GLASSES_AMOUNT = 50;
     private static final int MINIMUM_PRODUCT_AMOUNT = 1;
     private final String name;
@@ -40,7 +40,7 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
     private final Glasses glassesCopy;
     private int queueNumber;
     private int ticketNumber;
-    private Status status;
+    private State state;
 
     public SmartCoffeeMachineModel(final String name, EventBus eventBus) {
         this.name = name;
@@ -63,8 +63,8 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
 
         this.queueNumber = 0;
         this.ticketNumber = 1;
-        this.status = Status.WORKING;
-        this.publishStatus();
+        this.state = State.WORKING;
+        this.publishState();
     }
 
     @Override
@@ -77,10 +77,10 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
     }
 
     @Override
-    public Future<String> getStatus() {
+    public Future<String> getState() {
         final Promise<String> promise = Promise.promise();
         synchronized (this) {
-            promise.complete(this.status.toString());
+            promise.complete(this.state.toString());
         }
         return promise.future();
     }
@@ -136,8 +136,8 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
                         this.publishServed(resource);
 
                         if (this.glasses.getRemaining() == 0 || this.resources.stream().allMatch(r -> r.getRemaining() == 0)) {
-                            this.status = Status.NOT_AVAILABLE;
-                            this.publishStatus();
+                            this.state = State.NOT_AVAILABLE;
+                            this.publishState();
                         }
 
                     } catch (InterruptedException e) {
@@ -175,8 +175,8 @@ public class SmartCoffeeMachineModel implements SmartCoffeeMachineAPI {
         this.eventBus.publish("events/served", json);
     }
 
-    private void publishStatus() {
-        this.eventBus.publish("events/statusChanged", this.status.toString());
+    private void publishState() {
+        this.eventBus.publish("events/stateChanged", this.state.toString());
     }
 
 }

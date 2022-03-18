@@ -12,23 +12,22 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import scm.*;
 
-@Route("machine/:name")
+@Route("machine/:port")
 public class SmartCoffeeMachineView extends NotifiableView implements BeforeEnterObserver, HasDynamicTitle {
 
-    private static final String STATUS_TEXT = "Status -> ";
+    private static final String STATUS_TEXT = "State -> ";
     private final DashBoardService service;
     private final H1 heading;
-    private final Label status;
+    private final Label state;
     private final Grid<Resource> resources;
-    private String name;
+    private int port;
 
     public SmartCoffeeMachineView() {
-        super();
         this.service = VaadinSession.getCurrent().getAttribute(DashBoardService.class);
 
         this.heading = new H1();
 
-        this.status = new Label();
+        this.state = new Label();
 
         this.resources = new Grid<>(Resource.class, true);
         this.resources.setAllRowsVisible(true);
@@ -40,7 +39,7 @@ public class SmartCoffeeMachineView extends NotifiableView implements BeforeEnte
         });
         this.resources.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
 
-        add(this.heading, this.status, this.resources);
+        add(this.heading, this.state, this.resources);
 
         setHorizontalComponentAlignment(Alignment.CENTER, this.resources);
         setAlignItems(Alignment.CENTER);
@@ -48,26 +47,21 @@ public class SmartCoffeeMachineView extends NotifiableView implements BeforeEnte
 
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        this.name = event.getRouteParameters().get("name").orElse(null);
+        this.port = event.getRouteParameters().getInteger("port").orElse(0);
 
-        this.heading.setText(this.name);
+        this.heading.setText(this.service.getNames().get(this.port));
 
-        this.service.getStatusOfDigitalTwin(this.name).onComplete(r -> {
-            if (r.succeeded()) {
-                this.updateUI(() -> this.resources.setItems(this.service.getResourcesOfDigitalTwin(this.name))
-                        .setIdentifierProvider(Resource::getName));
+        final String state = this.service.getStates(this.port);
+        this.state.setText(STATUS_TEXT + state);
 
-                this.updateUI(() -> this.status.setText(STATUS_TEXT + r.result()));
-            } else {
-                this.updateUI(() -> this.status.setText(STATUS_TEXT + Status.OUT_OF_SERVICE));
-            }
-        });
+        this.resources.setItems(this.service.getResources(this.port))
+                .setIdentifierProvider(Resource::getName);
 
-        this.service.subscribeToStatusChanged(this.name,
-                s -> this.updateUI(() -> this.status.setText(STATUS_TEXT + s)),
-                unused -> this.updateUI(() -> this.status.setText(STATUS_TEXT + Status.OUT_OF_SERVICE)));
+        this.service.subscribeToStateChanged(this.port,
+                s -> this.updateUI(() -> this.state.setText(STATUS_TEXT + s)),
+                unused -> this.updateUI(() -> this.state.setText(STATUS_TEXT + State.OUT_OF_SERVICE)));
 
-        this.service.subscribeToServed(this.name, json -> {
+        this.service.subscribeToServed(this.port, json -> {
             final String product = json.getString("product");
             final int remaining = json.getInteger("remaining");
             final int sugarRemaining = json.getInteger("sugarRemaining");
@@ -83,6 +77,6 @@ public class SmartCoffeeMachineView extends NotifiableView implements BeforeEnte
 
     @Override
     public String getPageTitle() {
-        return "Smart Coffee Machine " + this.name;
+        return "Smart Coffee Machine " + this.service.getNames().get(this.port);
     }
 }

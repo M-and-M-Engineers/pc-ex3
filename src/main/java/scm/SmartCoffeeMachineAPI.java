@@ -8,7 +8,7 @@ public interface SmartCoffeeMachineAPI {
 
     Future<String> getName();
 
-    Future<String> getStatus();
+    Future<String> getState();
 
     Future<List<Resource>> getResources();
 
